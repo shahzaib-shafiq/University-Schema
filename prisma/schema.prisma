@@ -20,3 +20,19 @@ datasource db {
 // MODELS
 // --------------------
 
+// USER
+model User {
+  id           String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  firstName    String
+  lastName     String
+  email        String   @unique
+  password     String
+  role         String
+  summary      String?
+  address       String?
+  isDeleted    Boolean  @default(false)
+  isVerified   Boolean  @default(true)
+  phone        String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
