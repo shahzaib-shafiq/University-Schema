@@ -52,6 +52,12 @@ enum DayOfWeek {
   SATURDAY
   SUNDAY
 }
+enum RoomType {
+  CLASSROOM
+  LAB
+  AUDITORIUM
+  MEETING
+}
 
 enum AttendanceStatus {
   PRESENT
@@ -202,7 +208,9 @@ model ClassSchedule {
   day        DayOfWeek
   startTime  DateTime
   endTime    DateTime
-  room       String?
+  roomId String? @db.Uuid
+  room   Room? @relation(fields: [roomId], references: [id])
+
   createdAt  DateTime @default(now())
 }
 
@@ -295,4 +303,12 @@ model AuditLog {
   metadata  Json?
 
   createdAt DateTime @default(now())
+}
+
+model Room {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name      String   @unique   // e.g. "Room 204", "Lab 1"
+  capacity  Int?
+  type      RoomType?
+  schedules ClassSchedule[]
 }
