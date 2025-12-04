@@ -107,6 +107,10 @@ model User {
   lastLogin    DateTime?
   createdAt    DateTime      @default(now())
   updatedAt    DateTime      @updatedAt
+  username     String? @unique
+  cnic         String?   
+  emergencyContact String?
+  emergencyContactPerson String?
 
   departmentId String?     @db.Uuid
   department   Department? @relation(fields: [departmentId], references: [id])
@@ -138,6 +142,9 @@ model Program {
   department   Department @relation(fields: [departmentId], references: [id])
   students     Student[]
   semesters    Semester[]
+  durationYears Int?  // 2-year, 4-year, etc.
+  totalSemesters Int?
+
 }
 
 model Semester {
@@ -148,6 +155,10 @@ model Semester {
   program        Program      @relation(fields: [programId], references: [id])
   courses        Course[]
   academicYearId String       @db.Uuid
+  startDate DateTime?
+  endDate   DateTime?
+  isActive  Boolean @default(false)
+
   academicYear   AcademicYear @relation(fields: [academicYearId], references: [id])
 }
 
@@ -162,6 +173,10 @@ model Course {
   departmentId String     @db.Uuid
   department   Department @relation(fields: [departmentId], references: [id])
   sections     Section[]
+  credits Int?
+  level   Int?      // 100, 200, 300, 400 course level
+  isElective Boolean @default(false)
+
 }
 
 model Section {
@@ -171,13 +186,14 @@ model Section {
   course    Course   @relation(fields: [courseId], references: [id])
   facultyId String?  @db.Uuid
   faculty   Faculty? @relation(fields: [facultyId], references: [id])
-
   schedule    ClassSchedule[]
   enrollments Enrollment[]
   attendance  Attendance[]
   grades      GradeRecord[]
   assignments Assignment[]
   exams       Exam[]
+  capacity Int?
+
 }
 
 model Student {
