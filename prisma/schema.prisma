@@ -30,6 +30,15 @@ enum AccountStatus {
   ARCHIVED
 }
 
+enum FeeType {
+  TUITION
+  SEMESTER
+  EXAM
+  REGISTRATION
+  HOSTEL
+  TRANSPORT
+}
+
 enum Gender {
   MALE
   FEMALE
@@ -52,6 +61,7 @@ enum DayOfWeek {
   SATURDAY
   SUNDAY
 }
+
 enum RoomType {
   CLASSROOM
   LAB
@@ -78,237 +88,270 @@ enum Grade {
 }
 
 model User {
-  id            String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  firstName     String
-  middleName    String?
-  lastName      String
-  email         String   @unique
-  password      String
-  role          Role
-  status        AccountStatus @default(ACTIVE)
-  gender        Gender?
-  address       String?
-  phone         String?
-  profileImage  String?
-  dateOfBirth   DateTime?
-  isVerified    Boolean @default(false)
-  isDeleted     Boolean @default(false)
-  summary       String?
-  lastLogin     DateTime?
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  id           String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  firstName    String
+  middleName   String?
+  lastName     String
+  email        String        @unique
+  password     String
+  role         Role
+  status       AccountStatus @default(ACTIVE)
+  gender       Gender?
+  address      String?
+  phone        String?
+  profileImage String?
+  dateOfBirth  DateTime?
+  isVerified   Boolean       @default(false)
+  isDeleted    Boolean       @default(false)
+  summary      String?
+  lastLogin    DateTime?
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
 
-  departmentId  String? @db.Uuid
-  department    Department? @relation(fields: [departmentId], references: [id])
+  departmentId String?     @db.Uuid
+  department   Department? @relation(fields: [departmentId], references: [id])
 
-  students  Student[]   
-  faculties Faculty[]
+  students      Student[]
+  faculties     Faculty[]
   notifications Notification[]
   auditLogs     AuditLog[]
+  activityLogs  ActivityLog[]
 }
 
-
 model Department {
-  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  name       String
-  code       String   @unique
-  users      User[]
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name      String
+  code      String   @unique
+  users     User[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-
-  programs     Program[]
-  courses      Course[]
-
+  programs Program[]
+  courses  Course[]
 }
 
 model Program {
   id           String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   name         String
-  code         String      @unique
-  departmentId String      @db.Uuid
-  department   Department  @relation(fields: [departmentId], references: [id])
-  students Student[]
+  code         String     @unique
+  departmentId String     @db.Uuid
+  department   Department @relation(fields: [departmentId], references: [id])
+  students     Student[]
   semesters    Semester[]
 }
 
 model Semester {
-  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  name       String
-  number     Int
-  programId  String   @db.Uuid
-  program    Program  @relation(fields: [programId], references: [id])
-  courses    Course[]
+  id             String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name           String
+  number         Int
+  programId      String       @db.Uuid
+  program        Program      @relation(fields: [programId], references: [id])
+  courses        Course[]
+  academicYearId String       @db.Uuid
+  academicYear   AcademicYear @relation(fields: [academicYearId], references: [id])
 }
 
 model Course {
-  id            String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  code          String   @unique
-  title         String
-  description   String?
-  creditHours   Int
-  semesterId    String?  @db.Uuid
-  semester      Semester? @relation(fields: [semesterId], references: [id])
-  departmentId  String    @db.Uuid
-  department    Department @relation(fields: [departmentId], references: [id])
-  sections      Section[]
+  id           String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  code         String     @unique
+  title        String
+  description  String?
+  creditHours  Int
+  semesterId   String?    @db.Uuid
+  semester     Semester?  @relation(fields: [semesterId], references: [id])
+  departmentId String     @db.Uuid
+  department   Department @relation(fields: [departmentId], references: [id])
+  sections     Section[]
 }
 
-
 model Section {
-  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  name        String
-  courseId    String   @db.Uuid
-  course      Course   @relation(fields: [courseId], references: [id])
-  facultyId   String?  @db.Uuid
-  faculty     Faculty? @relation(fields: [facultyId], references: [id])
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name      String
+  courseId  String   @db.Uuid
+  course    Course   @relation(fields: [courseId], references: [id])
+  facultyId String?  @db.Uuid
+  faculty   Faculty? @relation(fields: [facultyId], references: [id])
 
- schedule    ClassSchedule[]
- enrollments Enrollment[]
- attendance  Attendance[]
- grades      GradeRecord[]
- assignments Assignment[]
-
+  schedule    ClassSchedule[]
+  enrollments Enrollment[]
+  attendance  Attendance[]
+  grades      GradeRecord[]
+  assignments Assignment[]
+  exams       Exam[]
 }
 
 model Student {
-  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  id String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
 
-  userId      String   @unique @db.Uuid
-  user        User     @relation(fields: [userId], references: [id])
-  programId   String?  @db.Uuid
-  program     Program? @relation(fields: [programId], references: [id])
+  userId    String   @unique @db.Uuid
+  user      User     @relation(fields: [userId], references: [id])
+  programId String?  @db.Uuid
+  program   Program? @relation(fields: [programId], references: [id])
 
   enrollments Enrollment[]
   attendance  Attendance[]
   grades      GradeRecord[]
+  fees        Fee[]
   submissions AssignmentSubmission[]
 }
 
-
 model Faculty {
-  id            String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  id String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
 
-  userId        String   @unique @db.Uuid
-  user          User     @relation(fields: [userId], references: [id])
+  userId String @unique @db.Uuid
+  user   User   @relation(fields: [userId], references: [id])
 
-  designation   String?
+  designation    String?
   specialization String?
-  sections      Section[]
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  sections       Section[]
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
 }
 
 model ClassSchedule {
-  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  id String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
 
-  sectionId  String   @db.Uuid
-  section    Section  @relation(fields: [sectionId], references: [id])
+  sectionId String  @db.Uuid
+  section   Section @relation(fields: [sectionId], references: [id])
 
-  day        DayOfWeek
-  startTime  DateTime
-  endTime    DateTime
-  roomId String? @db.Uuid
-  room   Room? @relation(fields: [roomId], references: [id])
+  day       DayOfWeek
+  startTime DateTime
+  endTime   DateTime
+  roomId    String?   @db.Uuid
+  room      Room?     @relation(fields: [roomId], references: [id])
 
-  createdAt  DateTime @default(now())
+  createdAt DateTime @default(now())
 }
 
 model Enrollment {
-  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  id String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
 
-  studentId  String   @db.Uuid
-  student    Student  @relation(fields: [studentId], references: [id])
+  studentId String  @db.Uuid
+  student   Student @relation(fields: [studentId], references: [id])
 
-  sectionId  String   @db.Uuid
-  section    Section  @relation(fields: [sectionId], references: [id])
+  sectionId String  @db.Uuid
+  section   Section @relation(fields: [sectionId], references: [id])
 
-  status     EnrollmentStatus @default(ENROLLED)
-  semester   Int?
+  status   EnrollmentStatus @default(ENROLLED)
+  semester Int?
 
-  createdAt  DateTime @default(now())
+  createdAt DateTime @default(now())
 }
 
 model Attendance {
-  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  id String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
 
-  date       DateTime
-  status     AttendanceStatus
+  date   DateTime
+  status AttendanceStatus
 
-  studentId  String   @db.Uuid
-  student    Student  @relation(fields: [studentId], references: [id])
+  studentId String  @db.Uuid
+  student   Student @relation(fields: [studentId], references: [id])
 
-  sectionId  String   @db.Uuid
-  section    Section  @relation(fields: [sectionId], references: [id])
+  sectionId String  @db.Uuid
+  section   Section @relation(fields: [sectionId], references: [id])
 
-  createdAt  DateTime @default(now())
+  createdAt DateTime @default(now())
 }
 
-
 model GradeRecord {
-  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  studentId  String   @db.Uuid
-  student    Student  @relation(fields: [studentId], references: [id])
-  sectionId  String   @db.Uuid
-  section    Section  @relation(fields: [sectionId], references: [id])
-  grade      Grade?
-  marks      Float?
-  remarks    String?
-  createdAt  DateTime @default(now())
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  studentId String   @db.Uuid
+  student   Student  @relation(fields: [studentId], references: [id])
+  sectionId String   @db.Uuid
+  section   Section  @relation(fields: [sectionId], references: [id])
+  grade     Grade?
+  marks     Float?
+  remarks   String?
+  createdAt DateTime @default(now())
+  examId    String?  @db.Uuid
+  exam      Exam?    @relation(fields: [examId], references: [id])
 }
 
 model Assignment {
-  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  id          String                 @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   title       String
   description String?
   dueDate     DateTime
-  sectionId   String   @db.Uuid
-  section     Section  @relation(fields: [sectionId], references: [id])
+  sectionId   String                 @db.Uuid
+  section     Section                @relation(fields: [sectionId], references: [id])
   submissions AssignmentSubmission[]
 }
 
 model AssignmentSubmission {
-  id           String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  studentId    String   @db.Uuid
-  student      Student  @relation(fields: [studentId], references: [id])
-  assignmentId String   @db.Uuid
+  id           String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  studentId    String     @db.Uuid
+  student      Student    @relation(fields: [studentId], references: [id])
+  assignmentId String     @db.Uuid
   assignment   Assignment @relation(fields: [assignmentId], references: [id])
   fileUrl      String?
-  submittedAt  DateTime @default(now())
+  submittedAt  DateTime   @default(now())
   marks        Float?
   feedback     String?
 }
 
 model Notification {
-  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-
-  userId     String   @db.Uuid
-  user       User     @relation(fields: [userId], references: [id])
-
-  title      String
-  message    String
-  isRead     Boolean  @default(false)
-
-  createdAt  DateTime @default(now())
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId    String   @db.Uuid
+  user      User     @relation(fields: [userId], references: [id])
+  title     String
+  message   String
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
 }
-
 
 model AuditLog {
   id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-
   userId    String?  @db.Uuid
   user      User?    @relation(fields: [userId], references: [id])
-
   action    String
   metadata  Json?
-
   createdAt DateTime @default(now())
 }
 
 model Room {
-  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  name      String   @unique   // e.g. "Room 204", "Lab 1"
+  id        String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name      String          @unique // e.g. "Room 204", "Lab 1"
   capacity  Int?
   type      RoomType?
   schedules ClassSchedule[]
+}
+
+model AcademicYear {
+  id        String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name      String // e.g. 2024-2025
+  start     DateTime
+  end       DateTime
+  semesters Semester[]
+}
+
+model Exam {
+  id    String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  title String
+  date  DateTime
+
+  sectionId String        @db.Uuid
+  section   Section       @relation(fields: [sectionId], references: [id])
+  grades    GradeRecord[]
+}
+
+model ActivityLog {
+  id     String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId String @db.Uuid
+  user   User   @relation(fields: [userId], references: [id])
+
+  action    String
+  metadata  Json?
+  createdAt DateTime @default(now())
+}
+
+model Fee {
+  id        String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  studentId String    @db.Uuid
+  student   Student   @relation(fields: [studentId], references: [id])
+  amount    Float
+  type      FeeType
+  dueDate   DateTime
+  isPaid    Boolean   @default(false)
+  paidAt    DateTime?
+  createdAt DateTime  @default(now())
 }
