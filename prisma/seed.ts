@@ -1,6 +1,30 @@
-import { PrismaClient, Role, AccountStatus, Gender, DayOfWeek, RoomType, FeeType, EnrollmentStatus, AttendanceStatus, Grade } from '@prisma/client';
+import { PrismaPg } from '@prisma/adapter-pg';
+import { AccountStatus, FeeType, RoomType } from '@prisma/client';
+import { Pool } from 'pg';
+import * as dotenv from 'dotenv';
 
-const prisma = new PrismaClient();
+dotenv.config();
+
+import {
+  PrismaClient,
+  Role,
+  Gender,
+  DayOfWeek,
+  AttendanceStatus,
+  EnrollmentStatus,
+  Grade,
+} from '@prisma/client';
+
+
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+});
+
+const adapter = new PrismaPg(pool);
+
+const prisma = new PrismaClient({
+  adapter,
+});
 
 async function main() {
   console.log("🌱 Starting database seed...");
@@ -334,11 +358,8 @@ async function main() {
 }
 
 main()
-  .then(async () => {
-    await prisma.$disconnect();
-  })
-  .catch(async (e) => {
-    console.error("❌ Seed Error:", e);
-    await prisma.$disconnect();
+  .catch((e) => {
+    console.error(e);
     process.exit(1);
-  });
+  })
+  .finally(() => prisma.$disconnect());
