@@ -1,288 +1,344 @@
-import { PrismaPg } from '@prisma/adapter-pg';
-import { Pool } from 'pg';
-import * as dotenv from 'dotenv';
+import { PrismaClient, Role, AccountStatus, Gender, DayOfWeek, RoomType, FeeType, EnrollmentStatus, AttendanceStatus, Grade } from '@prisma/client';
 
-dotenv.config();
-
-import {
-  PrismaClient,
-  Role,
-  Gender,
-  DayOfWeek,
-  AttendanceStatus,
-  EnrollmentStatus,
-  Grade,
-} from '@prisma/client';
-
-
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-});
-
-const adapter = new PrismaPg(pool);
-
-const prisma = new PrismaClient({
-  adapter,
-});
+const prisma = new PrismaClient();
 
 async function main() {
+  console.log("🌱 Starting database seed...");
 
-  console.log('🌱 Starting database seed...');
+  // -------------------------
+  // 1. Academic Year
+  // -------------------------
+  const academicYear = await prisma.academicYear.create({
+    data: {
+      name: "2024-2025",
+      start: new Date("2024-08-01"),
+      end: new Date("2025-06-30"),
+    }
+  });
 
-  // ------------------------------
-  // 1. DEPARTMENTS
-  // ------------------------------
+  // -------------------------
+  // 2. Departments
+  // -------------------------
   const csDept = await prisma.department.create({
     data: {
-      name: 'Computer Science',
-      code: 'CS',
-    },
+      name: "Computer Science",
+      code: "CS",
+    }
   });
 
-  const bioDept = await prisma.department.create({
+  const engDept = await prisma.department.create({
     data: {
-      name: 'Biology',
-      code: 'BIO',
-    },
+      name: "Engineering",
+      code: "ENG",
+    }
   });
 
-  // ------------------------------
-  // 2. USERS (Admin, Faculty, Students)
-  // ------------------------------
+  // -------------------------
+  // 3. Programs
+  // -------------------------
+  const bsCs = await prisma.program.create({
+    data: {
+      name: "BS Computer Science",
+      code: "BSCS",
+      departmentId: csDept.id,
+      durationYears: 4,
+      totalSemesters: 8
+    }
+  });
+
+  const bsEng = await prisma.program.create({
+    data: {
+      name: "BS Engineering",
+      code: "BSENG",
+      departmentId: engDept.id,
+      durationYears: 4,
+      totalSemesters: 8
+    }
+  });
+
+  // -------------------------
+  // 4. Semesters
+  // -------------------------
+  const semester1 = await prisma.semester.create({
+    data: {
+      name: "Semester 1",
+      number: 1,
+      programId: bsCs.id,
+      academicYearId: academicYear.id,
+      startDate: new Date("2024-08-10"),
+      endDate: new Date("2024-12-10"),
+      isActive: true
+    }
+  });
+
+  const semester2 = await prisma.semester.create({
+    data: {
+      name: "Semester 2",
+      number: 2,
+      programId: bsCs.id,
+      academicYearId: academicYear.id,
+      startDate: new Date("2025-01-05"),
+      endDate: new Date("2025-05-15"),
+      isActive: false
+    }
+  });
+
+  // -------------------------
+  // 5. Users (Admins, Faculty, Students)
+  // -------------------------
   const superAdmin = await prisma.user.create({
     data: {
-      firstName: 'System',
-      lastName: 'Admin',
-      email: 'admin@example.com',
-      password: 'hashedpassword', // replace with actual hash
+      firstName: "Super",
+      lastName: "Admin",
+      email: "superadmin@uni.com",
+      password: "hashedpassword",
       role: Role.SUPER_ADMIN,
+      status: AccountStatus.ACTIVE,
+      gender: Gender.MALE,
       departmentId: csDept.id,
-      isVerified: true,
-    },
+      username: "super1"
+    }
   });
 
   const facultyUser = await prisma.user.create({
     data: {
-      firstName: 'Alice',
-      lastName: 'Johnson',
-      email: 'alice.faculty@example.com',
-      password: 'hashedpassword',
+      firstName: "John",
+      lastName: "Doe",
+      email: "john.doe@uni.com",
+      password: "hashedpassword",
       role: Role.FACULTY,
-      gender: Gender.FEMALE,
+      status: AccountStatus.ACTIVE,
+      gender: Gender.MALE,
       departmentId: csDept.id,
-      isVerified: true,
-    },
+      username: "john123"
+    }
   });
 
   const studentUser = await prisma.user.create({
     data: {
-      firstName: 'Bob',
-      lastName: 'Smith',
-      email: 'bob.student@example.com',
-      password: 'hashedpassword',
+      firstName: "Alice",
+      lastName: "Smith",
+      email: "alice.smith@uni.com",
+      password: "hashedpassword",
       role: Role.STUDENT,
-      gender: Gender.MALE,
+      gender: Gender.FEMALE,
       departmentId: csDept.id,
-      isVerified: true,
-    },
+      username: "alice1",
+      status: AccountStatus.ACTIVE,
+    }
   });
 
-  // ------------------------------
-  // 3. FACULTY PROFILE
-  // ------------------------------
+  // -------------------------
+  // 6. Faculty
+  // -------------------------
   const faculty = await prisma.faculty.create({
     data: {
       userId: facultyUser.id,
-      designation: 'Assistant Professor',
-      specialization: 'Artificial Intelligence',
-    },
+      designation: "Assistant Professor",
+      specialization: "Artificial Intelligence"
+    }
   });
 
-  // ------------------------------
-  // 4. PROGRAMS
-  // ------------------------------
-  const bsCS = await prisma.program.create({
-    data: {
-      name: 'Bachelors in Computer Science',
-      code: 'BSCS',
-      departmentId: csDept.id,
-    },
-  });
-
-  // ------------------------------
-  // 5. STUDENT PROFILE
-  // ------------------------------
+  // -------------------------
+  // 7. Student
+  // -------------------------
   const student = await prisma.student.create({
     data: {
       userId: studentUser.id,
-      programId: bsCS.id,
-    },
+      programId: bsCs.id
+    }
   });
 
-  // ------------------------------
-  // 6. SEMESTERS
-  // ------------------------------
-  const semester1 = await prisma.semester.create({
-    data: {
-      name: 'Fall 2025',
-      number: 1,
-      programId: bsCS.id,
-    },
-  });
-
-  // ------------------------------
-  // 7. COURSES
-  // ------------------------------
+  // -------------------------
+  // 8. Courses
+  // -------------------------
   const course1 = await prisma.course.create({
     data: {
-      title: 'Introduction to Programming',
-      code: 'CS101',
-      description: 'Basics of programming and problem solving.',
+      code: "CS101",
+      title: "Introduction to Programming",
       creditHours: 3,
       semesterId: semester1.id,
       departmentId: csDept.id,
-    },
+      credits: 3,
+      level: 100
+    }
   });
 
   const course2 = await prisma.course.create({
     data: {
-      title: 'Data Structures',
-      code: 'CS102',
-      description: 'Core data structures and algorithms.',
+      code: "CS102",
+      title: "Data Structures",
       creditHours: 3,
       semesterId: semester1.id,
       departmentId: csDept.id,
-    },
+      credits: 3,
+      level: 100
+    }
   });
 
-  // ------------------------------
-  // 8. SECTIONS
-  // ------------------------------
+  // -------------------------
+  // 9. Sections
+  // -------------------------
   const sectionA = await prisma.section.create({
     data: {
-      name: 'A',
+      name: "A",
       courseId: course1.id,
       facultyId: faculty.id,
-    },
+      capacity: 40
+    }
   });
 
-  // ------------------------------
-  // 9. CLASS SCHEDULE
-  // ------------------------------
-  await prisma.classSchedule.createMany({
-    data: [
-      {
-        sectionId: sectionA.id,
-        day: DayOfWeek.MONDAY,
-        startTime: new Date('2025-09-01T09:00:00Z'),
-        endTime: new Date('2025-09-01T10:30:00Z'),
-      },
-      {
-        sectionId: sectionA.id,
-        day: DayOfWeek.WEDNESDAY,
-        startTime: new Date('2025-09-03T09:00:00Z'),
-        endTime: new Date('2025-09-03T10:30:00Z'),
-      },
-    ],
+  const sectionB = await prisma.section.create({
+    data: {
+      name: "B",
+      courseId: course2.id,
+      facultyId: faculty.id,
+      capacity: 40
+    }
   });
 
-  // ------------------------------
-  // 10. ENROLLMENT
-  // ------------------------------
+  // -------------------------
+  // 10. Rooms
+  // -------------------------
+  const room101 = await prisma.room.create({
+    data: {
+      name: "Room 101",
+      capacity: 50,
+      type: RoomType.CLASSROOM
+    }
+  });
+
+  // -------------------------
+  // 11. Class Schedule
+  // -------------------------
+  await prisma.classSchedule.create({
+    data: {
+      sectionId: sectionA.id,
+      day: DayOfWeek.MONDAY,
+      startTime: new Date("2024-09-01T09:00:00Z"),
+      endTime: new Date("2024-09-01T10:30:00Z"),
+      roomId: room101.id
+    }
+  });
+
+  // -------------------------
+  // 12. Enrollment
+  // -------------------------
   const enrollment = await prisma.enrollment.create({
     data: {
       studentId: student.id,
       sectionId: sectionA.id,
       status: EnrollmentStatus.ENROLLED,
-      semester: 1,
-    },
+      semester: 1
+    }
   });
 
-  // ------------------------------
-  // 11. ATTENDANCE
-  // ------------------------------
+  // -------------------------
+  // 13. Attendance
+  // -------------------------
   await prisma.attendance.create({
     data: {
-      studentId: student.id,
-      sectionId: sectionA.id,
-      date: new Date('2025-09-01'),
+      date: new Date(),
       status: AttendanceStatus.PRESENT,
-    },
-  });
-
-  // ------------------------------
-  // 12. ASSIGNMENT
-  // ------------------------------
-  const assignment = await prisma.assignment.create({
-    data: {
-      title: 'Programming Assignment 1',
-      description: 'Write a basic calculator program.',
-      dueDate: new Date('2025-09-10'),
-      sectionId: sectionA.id,
-    },
-  });
-
-  // ------------------------------
-  // 13. ASSIGNMENT SUBMISSION
-  // ------------------------------
-  await prisma.assignmentSubmission.create({
-    data: {
-      assignmentId: assignment.id,
       studentId: student.id,
-      fileUrl: 'http://example.com/submissions/bob_assignment1.pdf',
-      marks: 95,
-      feedback: 'Excellent work!',
-    },
+      sectionId: sectionA.id
+    }
   });
 
-  // ------------------------------
-  // 14. GRADE RECORD
-  // ------------------------------
+  // -------------------------
+  // 14. Exam + GradeRecord
+  // -------------------------
+  const exam = await prisma.exam.create({
+    data: {
+      title: "Midterm Exam",
+      date: new Date(),
+      sectionId: sectionA.id
+    }
+  });
+
   await prisma.gradeRecord.create({
     data: {
       studentId: student.id,
       sectionId: sectionA.id,
+      examId: exam.id,
       grade: Grade.A,
-      marks: 92,
-      remarks: 'Great performance',
-    },
+      marks: 92
+    }
   });
 
-  // ------------------------------
-  // 15. NOTIFICATIONS
-  // ------------------------------
-  await prisma.notification.createMany({
-    data: [
-      {
-        userId: studentUser.id,
-        title: 'Welcome to the University',
-        message: 'Your student account has been activated.',
-      },
-      {
-        userId: facultyUser.id,
-        title: 'New Section Assigned',
-        message: 'You are assigned to teach CS101 - Section A.',
-      },
-    ],
+  // -------------------------
+  // 15. Assignments + Submissions
+  // -------------------------
+  const assignment = await prisma.assignment.create({
+    data: {
+      title: "Assignment 1",
+      description: "Solve the given problems.",
+      dueDate: new Date("2024-10-01"),
+      sectionId: sectionA.id
+    }
   });
 
-  // ------------------------------
-  // 16. AUDIT LOGS
-  // ------------------------------
+  await prisma.assignmentSubmission.create({
+    data: {
+      studentId: student.id,
+      assignmentId: assignment.id,
+      fileUrl: "https://example.com/file.pdf",
+      marks: 95,
+      feedback: "Excellent work!"
+    }
+  });
+
+  // -------------------------
+  // 16. Notifications
+  // -------------------------
+  await prisma.notification.create({
+    data: {
+      userId: studentUser.id,
+      title: "Assignment Reminder",
+      message: "Don't forget to submit Assignment 1!"
+    }
+  });
+
+  // -------------------------
+  // 17. Audit Logs / Activity Logs
+  // -------------------------
   await prisma.auditLog.create({
     data: {
       userId: superAdmin.id,
-      action: 'SYSTEM_INITIALIZED',
-      metadata: { seed: true },
-    },
+      action: "SYSTEM_BOOT",
+      metadata: { info: "System initialized" }
+    }
   });
 
-  console.log('🌱 Seed completed successfully.');
+  await prisma.activityLog.create({
+    data: {
+      userId: studentUser.id,
+      action: "LOGIN",
+      metadata: { device: "Chrome", ip: "192.168.1.10" }
+    }
+  });
+
+  // -------------------------
+  // 18. Fees
+  // -------------------------
+  await prisma.fee.create({
+    data: {
+      studentId: student.id,
+      amount: 50000,
+      type: FeeType.TUITION,
+      dueDate: new Date("2024-09-15")
+    }
+  });
+
+  console.log("🌱 Database seeded successfully.");
 }
 
 main()
-  .catch((e) => {
-    console.error(e);
-    process.exit(1);
+  .then(async () => {
+    await prisma.$disconnect();
   })
-  .finally(() => prisma.$disconnect());
+  .catch(async (e) => {
+    console.error("❌ Seed Error:", e);
+    await prisma.$disconnect();
+    process.exit(1);
+  });

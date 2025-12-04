@@ -88,28 +88,28 @@ enum Grade {
 }
 
 model User {
-  id           String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  firstName    String
-  middleName   String?
-  lastName     String
-  email        String        @unique
-  password     String
-  role         Role
-  status       AccountStatus @default(ACTIVE)
-  gender       Gender?
-  address      String?
-  phone        String?
-  profileImage String?
-  dateOfBirth  DateTime?
-  isVerified   Boolean       @default(false)
-  isDeleted    Boolean       @default(false)
-  summary      String?
-  lastLogin    DateTime?
-  createdAt    DateTime      @default(now())
-  updatedAt    DateTime      @updatedAt
-  username     String? @unique
-  cnic         String?   
-  emergencyContact String?
+  id                     String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  firstName              String
+  middleName             String?
+  lastName               String
+  email                  String        @unique
+  password               String
+  role                   Role
+  status                 AccountStatus @default(ACTIVE)
+  gender                 Gender?
+  address                String?
+  phone                  String?
+  profileImage           String?
+  dateOfBirth            DateTime?
+  isVerified             Boolean       @default(false)
+  isDeleted              Boolean       @default(false)
+  summary                String?
+  lastLogin              DateTime?
+  createdAt              DateTime      @default(now())
+  updatedAt              DateTime      @updatedAt
+  username               String?       @unique
+  cnic                   String?
+  emergencyContact       String?
   emergencyContactPerson String?
 
   departmentId String?     @db.Uuid
@@ -135,31 +135,30 @@ model Department {
 }
 
 model Program {
-  id           String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  name         String
-  code         String     @unique
-  departmentId String     @db.Uuid
-  department   Department @relation(fields: [departmentId], references: [id])
-  students     Student[]
-  semesters    Semester[]
-  durationYears Int?  // 2-year, 4-year, etc.
+  id             String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name           String
+  code           String     @unique
+  departmentId   String     @db.Uuid
+  department     Department @relation(fields: [departmentId], references: [id])
+  students       Student[]
+  semesters      Semester[]
+  durationYears  Int?
   totalSemesters Int?
-
 }
 
 model Semester {
-  id             String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  id             String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   name           String
   number         Int
-  programId      String       @db.Uuid
-  program        Program      @relation(fields: [programId], references: [id])
+  programId      String    @db.Uuid
+  program        Program   @relation(fields: [programId], references: [id])
   courses        Course[]
-  academicYearId String       @db.Uuid
-  startDate DateTime?
-  endDate   DateTime?
-  isActive  Boolean @default(false)
+  academicYearId String    @db.Uuid
+  startDate      DateTime?
+  endDate        DateTime?
+  isActive       Boolean   @default(false)
 
-  academicYear   AcademicYear @relation(fields: [academicYearId], references: [id])
+  academicYear AcademicYear @relation(fields: [academicYearId], references: [id])
 }
 
 model Course {
@@ -173,27 +172,25 @@ model Course {
   departmentId String     @db.Uuid
   department   Department @relation(fields: [departmentId], references: [id])
   sections     Section[]
-  credits Int?
-  level   Int?      // 100, 200, 300, 400 course level
-  isElective Boolean @default(false)
-
+  credits      Int?
+  level        Int? // 100, 200, 300, 400 course level
+  isElective   Boolean    @default(false)
 }
 
 model Section {
-  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  name      String
-  courseId  String   @db.Uuid
-  course    Course   @relation(fields: [courseId], references: [id])
-  facultyId String?  @db.Uuid
-  faculty   Faculty? @relation(fields: [facultyId], references: [id])
+  id          String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name        String
+  courseId    String          @db.Uuid
+  course      Course          @relation(fields: [courseId], references: [id])
+  facultyId   String?         @db.Uuid
+  faculty     Faculty?        @relation(fields: [facultyId], references: [id])
   schedule    ClassSchedule[]
   enrollments Enrollment[]
   attendance  Attendance[]
   grades      GradeRecord[]
   assignments Assignment[]
   exams       Exam[]
-  capacity Int?
-
+  capacity    Int?
 }
 
 model Student {
